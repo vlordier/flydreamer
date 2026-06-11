@@ -184,6 +184,14 @@ def make_logger(config):
       outputs.append(elements.logger.WandBOutput(name))
     elif output == 'scope':
       outputs.append(elements.logger.ScopeOutput(elements.Path(logdir)))
+    elif output == 'mlflow':
+      from bridges.mlflow_logger import MLFlowOutput
+      mlflow_cfg = config.logger.get('mlflow', {})
+      outputs.append(MLFlowOutput(
+          tracking_uri=mlflow_cfg.get('tracking_uri'),
+          experiment_name=mlflow_cfg.get('experiment_name', 'terminal_guidance'),
+          logdir=logdir, flat_config=config.flat if hasattr(config, 'flat') else None,
+      ))
     else:
       raise NotImplementedError(output)
   logger = elements.Logger(step, outputs, multiplier)
@@ -247,9 +255,11 @@ def make_env(config, index, **overrides):
       'pinpad': 'embodied.envs.pinpad:PinPad',
       'langroom': 'embodied.envs.langroom:LangRoom',
       'procgen': 'embodied.envs.procgen:ProcGen',
-      'fpv': lambda task, **kw: __import__(
-          'embodied.envs.fpv', fromlist=['create_fpv_env']
-      ).create_fpv_env(**kw),
+      'fpv': lambda task, **kw: (
+          __import__('embodied.envs.fpv', fromlist=['create_genesis_env']).create_genesis_env(**kw)
+          if task == 'terminal_guidance'
+          else __import__('embodied.envs.fpv', fromlist=['create_fpv_env']).create_fpv_env(**kw)
+      ),
       'bsuite': 'embodied.envs.bsuite:BSuite',
       'memmaze': lambda task, **kw: from_gym.FromGym(
           f'MemoryMaze-{task}-v0', **kw),
@@ -260,6 +270,10 @@ def make_env(config, index, **overrides):
     ctor = getattr(module, cls)
   kwargs = config.env.get(suite, {})
   kwargs.update(overrides)
+  # For fpv suite, merge task-specific env config if present
+  if suite == 'fpv' and task in config.env:
+    task_cfg = config.env[task]
+    kwargs.update(task_cfg if isinstance(task_cfg, dict) else {})
   if kwargs.pop('use_seed', False):
     kwargs['seed'] = hash((config.seed, index)) % (2 ** 32 - 1)
   if kwargs.pop('use_logdir', False):

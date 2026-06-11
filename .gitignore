@@ -6,3 +6,13 @@ __pycache__/
 *.egg-info
 MUJOCO_LOG.TXT
 ;
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+node_modules/
+.DS_Store
+.idea/
+*.swp
+.env
+.env.local

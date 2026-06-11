@@ -9,6 +9,7 @@ from embodied.envs.fpv.env import FPVEnv
 from embodied.envs.fpv.factory import (
     create_fpv_env,
     create_colosseum_env,
+    create_genesis_env,
     register_backend,
     register_reward,
     register_waypoint_manager,
@@ -37,6 +38,7 @@ __all__ = [
     # Factory functions
     "create_fpv_env",
     "create_colosseum_env",
+    "create_genesis_env",
     "create_isaacsim_env",
     "register_backend",
     "register_reward",

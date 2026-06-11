@@ -271,6 +271,7 @@ def create_fpv_env(
     simulator: str = "colosseum",
     reward_type: str = "navigation",
     waypoint_type: str = "visual",
+    env_class: type = FPVEnv,
     **config,
 ) -> FPVEnv:
     # Ensure registries are populated
@@ -320,7 +321,7 @@ def create_fpv_env(
     waypoints = waypoint_class(waypoint_config)
 
     # Create and return environment
-    return FPVEnv(
+    return env_class(
         backend=backend,
         reward_strategy=reward,
         waypoint_manager=waypoints,
@@ -372,3 +373,16 @@ def create_colosseum_env(**config) -> FPVEnv:
     Create a Colosseum-based FPV environment.
     """
     return create_fpv_env(simulator="colosseum", **config)
+
+
+def create_genesis_env(**config) -> FPVEnv:
+    """
+    Create a Genesis-based FPV environment for terminal guidance.
+    Requires registering components first via bridges.genesis_fpv_patch.register_all().
+    Uses GenesisFPVEnv for extended privileged observations.
+    """
+    from bridges.genesis_fpv_patch import GenesisFPVEnv, register_all
+    register_all()
+    config.pop("simulator", None)
+    config.pop("task", None)
+    return create_fpv_env(simulator="genesis", env_class=GenesisFPVEnv, **config)
