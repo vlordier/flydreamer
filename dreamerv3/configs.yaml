@@ -46,77 +46,42 @@ defaults:
       simulator: colosseum
       reward_type: navigation
       waypoint_type: visual
-      size: [96, 96]
-      control_hz: 30
-      max_steps: 2000
-      use_depth: false
-      # Control
-      roll_scale: 2.0
-      pitch_scale: 2.0
-      yaw_scale: 2.0
+    terminal_guidance:
+      simulator: genesis
+      reward_type: terminal_guidance
+      waypoint_type: target
+      size: [64, 64]
+      use_depth: true
+      control_hz: 50
+      max_steps: 500
+      roll_scale: 1.0
+      pitch_scale: 1.0
+      yaw_scale: 1.0
       throttle_hover: 0.35
       effective_range: 0.5
-      # Reward
-      gate_radius: 1.6
-      gate_bonus: 60.0
-      gate_bonus_decay: true
-      gate_size: 1.6
-      gate_bonus_progressive: true
-      gate_bonus_max_scale: 3.0
-      collision_penalty: -25.0
-      progress_scale: 5.0
-      progress_clip_min: -1
-      progress_clip_max: 1
-      survival_bonus: 0.1
+      gate_radius: 5.0
+      gate_bonus: 5.0
+      collision_penalty: -1.0
+      progress_scale: 10.0
+      progress_clip_min: -0.5
+      progress_clip_max: 0.5
+      survival_bonus: 0.01
       survival_decay: 200.0
-      time_penalty: -0.002
-      time_penalty_growth: 300.0
-      rate_penalty_scale: 0.3
-      rate_penalty_control_hz: 30.0
-      rate_yaw_weight: 1
-      jerk_penalty_scale: 0.001
-      visibility_penalty: 0.5
-      camera_fov: 100.0
-      # Waypoints
-      visible_waypoints: 5
-      show_spline: true
-      loop_start_index: 0
-      static_gates:
-        - "8.0,0.0,-3.0"
-        - "18.0,0.0,-5.0"
-        - "30.0,0.0,-5.0"
-        - "42.0,3.0,-5.0"
-        - "52.0,8.0,-5.0"
-        - "58.0,15.0,-5.0"
-        - "58.0,30.0,-5.0"
-        - "58.0,44.0,-5.0"
-        - "52.0,54.0,-5.0"
-        - "42.0,60.0,-5.0"
-        - "28.0,60.0,-5.0"
-        - "14.0,60.0,-5.0"
-      # Randomization
-      waypoint_randomization:
-        enabled: true
-        xy_radius: 5.0
-        z_range: [-2.0, 2.0]
-        min_altitude: -3.0
-        max_altitude: -10.0
-        min_waypoint_distance: 8.0
-        smoothing_factor: 0.6
-        seed: 0
-      # Backends
-      colosseum:
-        vehicle_name: ""
-        markers:
-          target_asset: "BP_RedMarker"
-          waypoint_asset: "BP_GrayMarker"
-          spline_asset: "Sphere"
-          target_scale: 0.6
-          waypoint_scale: 0.35
-          spline_scale: 0.12
-          target_is_blueprint: true
-          waypoint_is_blueprint: true
-          spline_is_blueprint: false
+      time_penalty: -0.02
+      time_penalty_growth: 50.0
+      rate_penalty_scale: 0.0
+      jerk_penalty_scale: 0.0
+      visibility_penalty: 0.0
+      camera_fov: 90
+      visible_waypoints: 0
+      show_spline: false
+      genesis:
+        seed: 42
+        scene_size: 200.0
+        camera_res: [64, 64]
+        camera_fov: 90
+        control_hz: 50
+        max_episode_steps: 500
 
   replay:
     size: 5e6
@@ -302,6 +267,59 @@ fpv:
     debug: True
 
   jax: {platform: 'cuda', policy_devices: [0], train_devices: [0], prealloc: True, precompile: True}
+
+terminal_guidance:
+  task: fpv_terminal_guidance
+  batch_size: 8
+  batch_length: 32
+  replay.size: 2e4
+  logger:
+    outputs: [jsonl]
+  run:
+    envs: 1
+    eval_envs: 1
+    train_ratio: 16
+    steps: 3e5
+    log_every: 30
+    save_every: 300
+    video_every: 2048
+    actor_threads: 1
+    debug: True
+
+  jax: {platform: cpu, prealloc: False, compute_dtype: float32}
+
+  agent.loss_scales:
+    aux_state: 1.0
+    aux_goal: 1.0
+
+terminal_guidance_cpu:
+  <<: *size1m
+  task: fpv_terminal_guidance
+  batch_size: 1
+  batch_length: 4
+  replay.size: 2e3
+  logger:
+    outputs: [jsonl]
+  run:
+    envs: 1
+    eval_envs: 1
+    train_ratio: 2
+    steps: 1e5
+    log_every: 30
+    save_every: 300
+    video_every: 2048
+    actor_threads: 1
+    debug: True
+
+  jax: {platform: cpu, prealloc: False, compute_dtype: float32}
+
+  agent:
+    horizon: 64
+    imag_length: 8
+
+  agent.loss_scales:
+    aux_state: 1.0
+    aux_goal: 1.0
 
 pretrain_wm:
   script: train_offline
