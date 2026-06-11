@@ -70,8 +70,8 @@ class Agent(embodied.jax.Agent):
         source=self.val, **config.slowvalue)
 
     # Auxiliary heads: predict state/goal from latent (SkyDreamer-style)
-    state_space = elements.Space(np.float32, (13,))
-    goal_space = elements.Space(np.float32, (4,))
+    state_space = obs_space.get('state', elements.Space(np.float32, (13,)))
+    goal_space = obs_space.get('goal', elements.Space(np.float32, (4,)))
     self.aux_state = embodied.jax.MLPHead(
         state_space, **config.aux_state_head, name='aux_state')
     self.aux_goal = embodied.jax.MLPHead(
