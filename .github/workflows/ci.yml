@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+  validate-configs:
+    name: Validate Configs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyyaml
+      - run: |
+          python -c "
+          import yaml, sys
+          with open('baselines.yaml') as f:
+              data = yaml.safe_load(f)
+          assert isinstance(data, dict), 'baselines.yaml must be a YAML mapping'
+          for domain, tasks in data.items():
+              assert isinstance(tasks, dict), f'{domain} must be a mapping'
+              for task, (min_r, max_r) in tasks.items():
+                  assert isinstance(min_r, (int, float)), f'{task} min reward invalid'
+                  assert isinstance(max_r, (int, float)), f'{task} max reward invalid'
+          print('baselines.yaml: OK')
+          "
+
+  smoke-test:
+    name: Smoke Test (import check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install .
+      - run: |
+          python -c "
+          # Verify key modules can be imported
+          import dreamerv3
+          print('dreamerv3: OK')
+          import embodied
+          print('embodied: OK')
+          import embodied.core
+          print('embodied.core: OK')
+          import embodied.run
+          print('embodied.run: OK')
+          print('All imports successful.')
+          "

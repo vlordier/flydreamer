@@ -1,3 +1,71 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__
 *.py[cod]
-__pycache__/
+*$py.class
+*.so
+*.egg
+*.egg-info
 dist
+build
+migrations
+
+# Environment
+.venv
+venv
+env
+.conda
+.pyenv
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+.tox
+
+# Logs
+logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.whl
+
+# Documentation
+*.md
+docs/
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.jenkinsfile
+tox.ini
+setup.cfg
+.pylintrc
+
+# Scripts (not needed in image)
+scripts/launch_*.sh
+
+# Demo/test data
+demo_data/
+scores/
+assets/
+
+# Temporary
+tmp/
+temp/
+*.tmp
